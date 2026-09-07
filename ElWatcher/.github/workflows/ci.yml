@@ -1,0 +1,103 @@
+# ============================================================================
+# ci.yml — Continuous Integration, udvidet udgave (dag 4)
+#
+# Nyt i forhold til dag 3:
+#   * concurrency  - annullerer forældede kørsler på samme branch
+#   * cache        - genbruger NuGet-pakker mellem kørsler
+#   * matrix       - kan køre testene på flere .NET-versioner
+#   * job summary  - læsbar rapport øverst på kørslen
+#   * permissions  - mindst mulige rettigheder til GITHUB_TOKEN
+#
+# Placeres i repoet under: .github/workflows/ci.yml
+# ============================================================================
+name: CI - byg og test
+
+# FORKLARING: princippet om mindste privilegium. Workflowet skal kun læse koden.
+permissions:
+  contents: read
+
+# FORKLARING: en ny kørsel på samme branch annullerer den igangværende.
+# Gør det ALDRIG i et deploy-workflow — et halvt gennemført upload er værre
+# end et langsomt.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  byg:
+    runs-on: ubuntu-latest
+
+    strategy:
+      # FORKLARING: fail-fast: false lader de øvrige kombinationer køre færdig,
+      # selv om én fejler. Ellers ser du kun den første fejl.
+      fail-fast: false
+      matrix:
+        # Projektet targeter net10.0. Matrixen står her, så I nemt kan tilføje
+        # en version igen ved næste opgradering.
+        dotnet: [ '10.0.x' ]
+
+    steps:
+      - name: Hent koden
+        uses: actions/checkout@v6
+
+      - name: Installer .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+
+      # FORKLARING: runneren er frisk hver gang, så uden cache hentes alle
+      # NuGet-pakker forfra. Nøglen indeholder et hash af projektfilerne —
+      # ændrer afhængighederne sig, laves der automatisk en ny cache.
+      - name: Cache NuGet-pakker
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Gendan NuGet-pakker
+        run: dotnet restore
+
+      - name: Byg
+        run: dotnet build --no-restore --configuration Release
+
+      # FORKLARING: 'set -o pipefail' er ikke pynt. GitHub kører run-steps med
+      # 'bash -e', altså UDEN pipefail. Uden linjen er steppets exit-kode tee's
+      # — altså 0 — og en fejlende testsuite ville lade jobbet stå grønt. Så
+      # ville status check'et på main ikke beskytte noget som helst.
+      - name: Kør unit tests
+        run: |
+          set -o pipefail
+          dotnet test --no-build --configuration Release \
+            --filter "Kategori!=Integration" | tee testoutput.txt
+
+      # FORKLARING: always() gør, at steppet også kører når testene fejlede.
+      # Det er præcis dér, man har brug for rapporten.
+      - name: Skriv testresultat til oversigten
+        if: always()
+        run: |
+          echo "## Testresultat" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Felt | Værdi |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Startet af | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| .NET | ${{ matrix.dotnet }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # FORKLARING: grep returnerer fejlkode, når den intet finder, og med
+          # 'bash -e' ville det afbryde steppet. Derfor faldbakken. Vi skriver
+          # en synlig besked i stedet for '|| true', så en tom kodeblok ikke
+          # kan forveksles med en testkørsel uden resultater.
+          { grep -E "Passed!|Failed!" testoutput.txt \
+            || echo "(ingen testoversigt fundet — se logfilen ovenfor)"; } >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
