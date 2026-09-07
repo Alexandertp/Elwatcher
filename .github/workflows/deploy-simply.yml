@@ -47,7 +47,7 @@ jobs:
       # --self-contained. win-x86 fordi deres app pools kører 32-bit.
       - name: Byg self-contained til win-x86
         run: |
-          dotnet publish DMI.Vejr.Web/DMI.Vejr.Web.csproj \
+          dotnet publish ElWatcher.Web/ElWatcher.csproj \
             --configuration Release \
             --runtime win-x86 \
             --self-contained true \
