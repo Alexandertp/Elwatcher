@@ -11,6 +11,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<IEnergiDataService, EnergiDataServiceClient>();
+
+var dbLagringService = new DBLagringService(builder.Configuration);
+builder.Services.AddSingleton(dbLagringService);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -22,9 +26,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
-
-
 
 
 app.UseAuthorization();
