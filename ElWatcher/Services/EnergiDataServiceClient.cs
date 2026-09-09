@@ -29,7 +29,7 @@ public class EnergiDataServiceClient : IEnergiDataService
         {
             return Enumerable.Empty<Co2Observationer>();
         }
-
+        // Looper gennem Records listen og ligger den i en IEnumerable 
         return result.Records.Select(r => new Co2Observationer
         {
             Tidspunkt = r.Tidspunkt,
