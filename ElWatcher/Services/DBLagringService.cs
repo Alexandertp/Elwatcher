@@ -16,7 +16,7 @@ public class DBLagringService
         password = configuration["DBCredentials:Password"] ?? "root";
         dbCatalog = configuration["DBCredentials:DBCatalog"] ?? "elwatcher";
     }
-    private async Task ForbindTilDatabase()
+    private async Task<SqlConnection> ForbindTilDatabase()
     {
         
         var strBuilder = new SqlConnectionStringBuilder
@@ -32,28 +32,22 @@ public class DBLagringService
         try
         {
             await using var connection = new SqlConnection(connectionString);
-            Console.WriteLine("\nQuery data example:");
-            Console.WriteLine("=========================================\n");
-
+            
             await connection.OpenAsync();
-
-            var sql = "SELECT smiley,test FROM test";
-            await using var command = new SqlCommand(sql, connection);
-            await using var reader = await command.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
-            {
-                Console.WriteLine("{0} {1}", reader.GetString(0), reader.GetString(1));
-            }
+            return connection;
         }
         catch (Exception e)
         {
             Console.WriteLine(e.ToString());
         }
+
+        return null;
     }
 
-    public void GemCo2Emission(IEnumerable<Co2Observationer> data)
+    public async Task GemCo2Emission(IEnumerable<Co2Observationer> data, SqlConnection connection)
     {
-        
+        var sql = "SELECT * FROM Co2Emission";
+        await using var command = new SqlCommand(sql, connection);
+        await using var reader = await command.ExecuteReaderAsync();
     }
 }
