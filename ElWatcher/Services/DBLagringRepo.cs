@@ -15,7 +15,7 @@ public class DBLagringRepo : IDBLagring
         dataSovs = configuration["DBCredentials:DataSource"] ?? "localhost";
         userID = configuration["DBCredentials:UserID"] ?? "root";
         password = configuration["DBCredentials:Password"] ?? "root";
-        dbCatalog = configuration["DBCredentials:DBCatalog"] ?? "elwatcher";
+        dbCatalog = configuration["DBCredentials:InitialCatalog"] ?? "elwatcher";
         
     }
     private async Task<SqlConnection> ForbindTilDatabase()
@@ -26,19 +26,25 @@ public class DBLagringRepo : IDBLagring
             DataSource = dataSovs,
             UserID = userID,
             Password = password,
-            InitialCatalog = dbCatalog
+            InitialCatalog = dbCatalog,
+            TrustServerCertificate = true
+
         };
 
         var connectionString = strBuilder.ConnectionString;
 
         try
         {
+            Console.WriteLine("Attempting connection to " + connectionString);
             var connection = new SqlConnection(connectionString);
             await connection.OpenAsync();
+            Console.WriteLine("Connection attempted");
             return connection;
+            
         }
         catch (Exception e)
         {
+            Console.WriteLine("connection failed HER ER FEJLEN NEDENUNDER HELST");
             Console.WriteLine(e.ToString());
         }
 
@@ -49,15 +55,21 @@ public class DBLagringRepo : IDBLagring
     {
         SqlConnection connection = await ForbindTilDatabase();
 
-        string del1 = "INSERT INTO Co2Emission (EmissionValue, Omraade, Tidspunkt) VALUES";
-        string del2 = "";
-        foreach (var Co2Observationer in data)
+        var vaerdier = new List<string>();
+        await using var command = new SqlCommand{ Connection = connection };
+
+        var index = 0;
+        foreach (var obs in data)
         {
-            del2 += $"('{Co2Observationer.EmissionValue}','{Co2Observationer.Omraade}','{Co2Observationer.Tidspunkt})',";
+            vaerdier.Add($"(@EmissionValue{index}, @Omraade{index}, @Tidspunkt{index})");
+            command.Parameters.AddWithValue($"@EmissionValue{index}", obs.EmissionValue);
+            command.Parameters.AddWithValue($"@Omraade{index}", obs.Omraade);
+            command.Parameters.AddWithValue($"@Tidspunkt{index}", obs.Tidspunkt);
         }
-        del2.TrimEnd(',');
-        var stringSql = del1 + del2 + ";";
-        await using var command = new SqlCommand(stringSql, connection);
-        await using var reader = await command.ExecuteReaderAsync();
+        
+        command.CommandText = "INSERT INTO Co2Emission (EmissionValue, Omraade, Tidspunkt) VALUES "
+            + string.Join(", ", vaerdier);
+        
+        await command.ExecuteNonQueryAsync();
     }
 }
