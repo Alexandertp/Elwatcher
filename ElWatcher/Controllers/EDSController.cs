@@ -7,10 +7,11 @@ namespace ElWatcher.Controllers;
 public class EDSController : ControllerBase
 {
     private readonly IEnergiDataService _energiDataService;
-
-    public EDSController(IEnergiDataService energiDataService)
+    private readonly IDBLagring _dbLagring;
+    public EDSController(IEnergiDataService energiDataService, IDBLagring dbLagring)
     {
         _energiDataService =  energiDataService;
+        _dbLagring = dbLagring;
     }
 
     [HttpGet]
@@ -19,5 +20,14 @@ public class EDSController : ControllerBase
     {
         var data = await _energiDataService.GetCurrentCo2EmissionAsync();
         return Ok(data);
+    }
+
+    [HttpGet]
+    [Route("Co2Emission/HentOgGem")]
+    public async Task<IActionResult> HentOgGemCo2Emission()
+    {
+        var data = await _energiDataService.GetCurrentCo2EmissionAsync();
+        await _dbLagring.GemCo2Emission(data);
+        return Ok();
     }
 }
