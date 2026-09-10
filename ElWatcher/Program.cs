@@ -1,3 +1,4 @@
+using ElWatcher.Controllers;
 using ElWatcher.Interfaces;
 using ElWatcher.Models;
 using ElWatcher.Services;
@@ -13,8 +14,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<IEnergiDataService, EnergiDataServiceClient>();
 
-var dbLagringService = new DBLagringRepo(builder.Configuration);
-builder.Services.AddSingleton(dbLagringService);
+// var dbLagringService = new DBLagringRepo(builder.Configuration);
+builder.Services.AddScoped<IDBLagring, DBLagringRepo>();
+//builder.Services.AddSingleton<IDBLagring>(dbLagringService);
 
 var app = builder.Build();
 
