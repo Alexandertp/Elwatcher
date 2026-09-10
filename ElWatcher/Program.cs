@@ -1,4 +1,5 @@
 using ElWatcher.Interfaces;
+using ElWatcher.Models;
 using ElWatcher.Services;
 using Microsoft.Data.SqlClient;
 
@@ -12,7 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<IEnergiDataService, EnergiDataServiceClient>();
 
-var dbLagringService = new DBLagringService(builder.Configuration);
+var dbLagringService = new DBLagringRepo(builder.Configuration);
 builder.Services.AddSingleton(dbLagringService);
 
 var app = builder.Build();
@@ -36,6 +37,5 @@ app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();
