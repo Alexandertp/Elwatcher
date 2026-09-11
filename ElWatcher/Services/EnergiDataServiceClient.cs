@@ -14,7 +14,7 @@ public class EnergiDataServiceClient : IEnergiDataService
         _httpClient.BaseAddress = new Uri("https://api.energidataservice.dk/dataset/");
     }
 
-    public async Task<IEnumerable<Co2Observationer>> GetCurrentCo2EmissionAsync()
+    public async Task<IEnumerable<Co2Observation>> GetCurrentCo2EmissionAsync()
     {
         var response = await _httpClient.GetAsync("CO2Emis?start=now-PT15M");
         response.EnsureSuccessStatusCode();
@@ -25,16 +25,16 @@ public class EnergiDataServiceClient : IEnergiDataService
             PropertyNameCaseInsensitive = true
         });
 
-        if (result?.Records is null)
+        if (result?.Records == null)
         {
-            return Enumerable.Empty<Co2Observationer>();
+            return Enumerable.Empty<Co2Observation>();
         }
         // Looper gennem Records listen og ligger den i en IEnumerable 
-        return result.Records.Select(r => new Co2Observationer
+        return result.Records.Select(r => new Co2Observation()
         {
-            Tidspunkt = r.Tidspunkt,
-            EmissionValue = r.EmissionValue,
-            Omraade = r.Omraade
+            Minutes5DK = r.Minutes5DK,
+            CO2Emission = r.CO2Emission,
+            PriceArea = r.PriceArea
         });
     }
 /// <summary>
@@ -42,6 +42,6 @@ public class EnergiDataServiceClient : IEnergiDataService
 /// </summary>
     private class Co2DataSvar
     {
-        public List<Models.Co2Observationer> Records { get; set; } = new();
+        public List<Models.Co2Observation> Records { get; set; } = new();
     }
 }
