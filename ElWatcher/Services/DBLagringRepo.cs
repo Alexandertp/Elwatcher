@@ -51,7 +51,7 @@ public class DBLagringRepo : IDBLagring
         return null;
     }
 
-    public async Task GemCo2Emission(IEnumerable<Co2Observationer> data)
+    public async Task GemCo2Emission(IEnumerable<Co2Observation> data)
     {
         SqlConnection connection = await ForbindTilDatabase();
 
@@ -62,9 +62,10 @@ public class DBLagringRepo : IDBLagring
         foreach (var obs in data)
         {
             vaerdier.Add($"(@EmissionValue{index}, @Omraade{index}, @Tidspunkt{index})");
-            command.Parameters.AddWithValue($"@EmissionValue{index}", obs.EmissionValue);
-            command.Parameters.AddWithValue($"@Omraade{index}", obs.Omraade);
-            command.Parameters.AddWithValue($"@Tidspunkt{index}", obs.Tidspunkt);
+            command.Parameters.AddWithValue($"@EmissionValue{index}", obs.CO2Emission);
+            command.Parameters.AddWithValue($"@Omraade{index}", obs.PriceArea);
+            command.Parameters.AddWithValue($"@Tidspunkt{index}", obs.Minutes5DK);
+            index++;
         }
         
         command.CommandText = "INSERT INTO Co2Emission (EmissionValue, Omraade, Tidspunkt) VALUES "
