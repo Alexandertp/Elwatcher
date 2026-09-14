@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using ElWatcher.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using ElWatcher.Models;
 
@@ -6,9 +7,17 @@ namespace ElWatcher.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly IDBLagring _dbLagring;
+
+    public HomeController(IDBLagring dbLagring)
     {
-        return View();
+        _dbLagring = dbLagring;
+    }
+    
+    public async Task<IActionResult> Index()
+    {
+        var data = await _dbLagring.HentAlleCo2Emission();
+        return View(data);
     }
 
     public IActionResult Privacy()

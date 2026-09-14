@@ -5,4 +5,5 @@ namespace ElWatcher.Interfaces;
 public interface IDBLagring
 {
     Task GemCo2Emission(IEnumerable<Co2Observation> data);
+    Task<IEnumerable<Co2Observation>> HentAlleCo2Emission();
 }

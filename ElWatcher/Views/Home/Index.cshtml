@@ -1,8 +1,23 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model IEnumerable<ElWatcher.Models.Co2Observation>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1>CO2-udledning</h1>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Område</th>
+        <th>Emissionsværdi</th>
+        <th>Tidspunkt</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.PriceArea</td>
+            <td>@item.CO2Emission</td>
+            <td>@item.Minutes5DK</td>
+        </tr>
+    }
+    </tbody>
+</table>

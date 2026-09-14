@@ -73,4 +73,27 @@ public class DBLagringRepo : IDBLagring
         
         await command.ExecuteNonQueryAsync();
     }
+
+    public async Task<IEnumerable<Co2Observation>> HentAlleCo2Emission()
+    {
+        await using var connection = await ForbindTilDatabase();
+        
+        var resultater = new List<Co2Observation>();
+
+        var command = new SqlCommand(
+            "SELECT EmissionValue, Omraade, Tidspunkt FROM Co2Emission ORDER BY Tidspunkt DESC",
+            connection);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            resultater.Add(new Co2Observation
+            {
+                CO2Emission = reader.GetDouble(0),
+                PriceArea = reader.GetString(1),
+                Minutes5DK = reader.GetDateTime(2),
+            });
+        }
+        return resultater;
+    }
 }
