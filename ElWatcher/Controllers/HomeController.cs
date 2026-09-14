@@ -8,15 +8,18 @@ namespace ElWatcher.Controllers;
 public class HomeController : Controller
 {
     private readonly IDBLagring _dbLagring;
+    private readonly IEnergiDataService _energiDataService;
 
-    public HomeController(IDBLagring dbLagring)
+    public HomeController(IDBLagring dbLagring, IEnergiDataService energiDataService)
     {
         _dbLagring = dbLagring;
+        _energiDataService = energiDataService;
     }
     
     public async Task<IActionResult> Index()
     {
-        var data = await _dbLagring.HentAlleCo2Emission();
+        await _dbLagring.GemCo2Emission(await _energiDataService.GetCurrentCo2EmissionAsync());
+        var data = await _dbLagring.HentTop6Co2Emission();
         return View(data);
     }
 
