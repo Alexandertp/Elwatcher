@@ -75,7 +75,7 @@ public class EDBIndsamler : BackgroundService
             var historik = scope.ServiceProvider.GetRequiredService<IDBLagring>();
             var edbService = scope.ServiceProvider.GetRequiredService<IEnergiDataService>();
 
-            var observationer = (await historik.HentTop6Co2Emission()).ToList();
+            var observationer = (await edbService.GetCurrentCo2EmissionAsync()).ToList();
 
             if (observationer.Count() == 0)
             {
@@ -84,6 +84,9 @@ public class EDBIndsamler : BackgroundService
             }
 
             await historik.GemCo2Emission(observationer);
+
+            var top6 = (await historik.HentTop6Co2Emission()).ToList();
+            await SendTilBrowserneAsync(top6, stoppingToken);
 
             _logger.LogInformation(
                 "Baggrundsindsamling gennemført: {Antal} observationer gemt", observationer.Count());

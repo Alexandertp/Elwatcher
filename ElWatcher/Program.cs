@@ -1,4 +1,5 @@
 using ElWatcher.Controllers;
+using ElWatcher.Hubs;
 using ElWatcher.Interfaces;
 using ElWatcher.Models;
 using ElWatcher.Services;
@@ -10,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<EDBIndsamler>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<IEnergiDataService, EnergiDataServiceClient>();
@@ -39,5 +42,7 @@ app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.MapHub<EDBHub>("/EDBHub");
 
 app.Run();

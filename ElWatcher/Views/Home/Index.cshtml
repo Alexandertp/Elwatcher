@@ -4,20 +4,57 @@
 
 <table class="table">
     <thead>
-    <tr>
-        <th>Område</th>
-        <th>Emissionsværdi</th>
-        <th>Tidspunkt</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var item in Model)
-    {
         <tr>
-            <td>@item.PriceArea</td>
-            <td>@item.CO2Emission</td>
-            <td>@item.Minutes5DK</td>
+            <th>Område</th>
+            <th>Emissionsværdi</th>
+            <th>Tidspunkt</th>
         </tr>
-    }
+    </thead>
+    <tbody id="co2-tabel-body">
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.PriceArea</td>
+                <td>@item.CO2Emission</td>
+                <td>@item.Minutes5DK</td>
+            </tr>
+        }
     </tbody>
 </table>
+
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/edbhub")   // skal matche din MapHub-route
+    .withAutomaticReconnect()
+    .build();
+
+    connection.on("NyeMaalinger", (data) => {
+    console.log("Nye målinger modtaget:", data);
+
+    const tbody = document.getElementById("co2-tabel-body");
+    tbody.innerHTML = ""; // ryd de gamle rækker
+
+    data.forEach(obs => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+    <td>${obs.priceArea}</td>
+    <td>${obs.cO2Emission}</td>
+    <td>${new Date(obs.minutes5DK).toLocaleString()}</td>
+    `;
+    tbody.appendChild(row);
+    });
+    });
+
+    connection.on("Velkommen", (besked) => {
+    console.log(besked);
+    });
+
+    connection.on("TilsluttedeOpdateret", (antal) => {
+    console.log("Tilsluttede klienter:", antal);
+    });
+
+    connection.start()
+    .then(() => console.log("Forbundet til EDBHub"))
+    .catch(err => console.error("Forbindelsesfejl:", err));
+</script>
