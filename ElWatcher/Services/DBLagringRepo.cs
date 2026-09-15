@@ -10,15 +10,16 @@ public class DBLagringRepo : IDBLagring
     private string userID;
     private string password;
     private string dbCatalog;
-    public DBLagringRepo(IConfiguration configuration)
+    private ILogger<DBLagringRepo> _logger;
+    public DBLagringRepo(IConfiguration configuration, ILogger<DBLagringRepo> logger)
     {
         dataSovs = configuration["DBCredentials:DataSource"] ?? "localhost";
         userID = configuration["DBCredentials:UserID"] ?? "root";
         password = configuration["DBCredentials:Password"] ?? "root";
         dbCatalog = configuration["DBCredentials:InitialCatalog"] ?? "elwatcher";
-        
+        _logger = logger;
     }
-    private async Task<SqlConnection> ForbindTilDatabase()
+    private async Task<SqlConnection?> ForbindTilDatabase()
     {
         
         var strBuilder = new SqlConnectionStringBuilder
@@ -32,11 +33,11 @@ public class DBLagringRepo : IDBLagring
         };
 
         var connectionString = strBuilder.ConnectionString;
+        var connection = new SqlConnection(connectionString);
 
         try
         {
             Console.WriteLine("Attempting connection to " + connectionString);
-            var connection = new SqlConnection(connectionString);
             await connection.OpenAsync();
             Console.WriteLine("Connection attempted");
             return connection;
@@ -44,16 +45,22 @@ public class DBLagringRepo : IDBLagring
         }
         catch (Exception e)
         {
-            Console.WriteLine("connection failed HER ER FEJLEN NEDENUNDER HELST");
-            Console.WriteLine(e.ToString());
+            _logger.LogError(e, "Databaseforbindelse til {DataSource} fejlede", dataSovs);
+            await connection.DisposeAsync();
+            return null;
         }
 
-        return null;
+       
     }
 
     public async Task GemCo2Emission(IEnumerable<Co2Observation> data)
     {
         SqlConnection connection = await ForbindTilDatabase();
+
+        if (connection == null)
+        {
+            throw new InvalidOperationException("Kunne ikke oprette databaseforbindelse.");
+        }
 
         var vaerdier = new List<string>();
         await using var command = new SqlCommand{ Connection = connection };
@@ -70,7 +77,9 @@ public class DBLagringRepo : IDBLagring
         
         command.CommandText = "INSERT INTO Co2Emission (EmissionValue, Omraade, Tidspunkt) VALUES "
             + string.Join(", ", vaerdier);
+
         
+
         await command.ExecuteNonQueryAsync();
     }
 
@@ -96,10 +105,14 @@ public class DBLagringRepo : IDBLagring
         }
         return resultater;
     }
-    public async Task<IEnumerable<Co2Observation>> HentTop6Co2Emission()
+    public async Task<IEnumerable<Co2Observation>?> HentTop6Co2Emission()
     {
         await using var connection = await ForbindTilDatabase();
-        
+        if (connection == null)
+        {
+            throw new InvalidOperationException("Kunne ikke oprette databaseforbindelse.");
+        }
+
         var resultater = new List<Co2Observation>();
 
         var command = new SqlCommand(

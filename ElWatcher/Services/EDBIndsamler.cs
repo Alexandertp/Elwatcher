@@ -11,7 +11,7 @@ public class EDBIndsamler : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EDBIndsamler> _logger;
     private readonly IHubContext<EDBHub> _hub;
-    private const int StandardIntervalSekunder = 600;
+    private const int StandardIntervalSekunder = 60;
     private readonly TimeSpan _interval;
 
     public EDBIndsamler(
@@ -75,7 +75,7 @@ public class EDBIndsamler : BackgroundService
             var historik = scope.ServiceProvider.GetRequiredService<IDBLagring>();
             var edbService = scope.ServiceProvider.GetRequiredService<IEnergiDataService>();
 
-            var observationer = await historik.HentTop6Co2Emission();
+            var observationer = (await historik.HentTop6Co2Emission()).ToList();
 
             if (observationer.Count() == 0)
             {
