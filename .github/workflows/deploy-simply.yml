@@ -60,7 +60,7 @@ jobs:
       - name: Gem udgivelsen som artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dmi-app
+          name: Elwatcher-app
           path: ./udgivelse
           retention-days: 5
 
@@ -78,7 +78,7 @@ jobs:
       - name: Hent udgivelsen
         uses: actions/download-artifact@v4
         with:
-          name: dmi-app
+          name: Elwatcher-app
           path: ./udgivelse
 
       - name: Skriv appsettings.Production.json
