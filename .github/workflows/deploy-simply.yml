@@ -90,8 +90,8 @@ jobs:
       - name: Læg filerne op via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:     ${{ secrets.DB_SERVER_NAME }}
-          username:   ${{ secrets.DB_USER_NAME }}
-          password:   ${{ secrets.DB_PASSWORD }}
+          server:     ${{ secrets.FTP_HOSTNAME }}
+          username:   ${{ secrets.FTP_USERNAME }}
+          password:   ${{ secrets.FTP_PASSWORD }}
           local-dir:  ./udgivelse/
           server-dir: /public_html/
