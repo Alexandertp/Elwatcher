@@ -47,7 +47,7 @@ jobs:
       # --self-contained. win-x86 fordi deres app pools kører 32-bit.
       - name: Byg self-contained til win-x86
         run: |
-          dotnet publish ElWatcher.Web/ElWatcher.csproj \
+          dotnet publish ElWatcher/ElWatcher.csproj \
             --configuration Release \
             --runtime win-x86 \
             --self-contained true \
@@ -60,7 +60,7 @@ jobs:
       - name: Gem udgivelsen som artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dmi-app
+          name: Elwatcher-app
           path: ./udgivelse
           retention-days: 5
 
@@ -78,7 +78,7 @@ jobs:
       - name: Hent udgivelsen
         uses: actions/download-artifact@v4
         with:
-          name: dmi-app
+          name: Elwatcher-app
           path: ./udgivelse
 
       - name: Skriv appsettings.Production.json
@@ -90,7 +90,7 @@ jobs:
       - name: Læg filerne op via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:     ${{ secrets.FTP_SERVER }}
+          server:     ${{ secrets.FTP_HOSTNAME }}
           username:   ${{ secrets.FTP_USERNAME }}
           password:   ${{ secrets.FTP_PASSWORD }}
           local-dir:  ./udgivelse/
