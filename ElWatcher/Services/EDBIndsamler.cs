@@ -90,8 +90,11 @@ public class EDBIndsamler : BackgroundService
 
             _logger.LogInformation(
                 "Baggrundsindsamling gennemført: {Antal} observationer gemt", observationer.Count());
+            foreach (var item in observationer )
+            {
+                _logger.LogInformation(item.Minutes5DK.ToString());
+            }
 
-            await SendTilBrowserneAsync(observationer, stoppingToken);
         }
         catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
         {
@@ -112,12 +115,9 @@ public class EDBIndsamler : BackgroundService
         var dtoer = observationer.Select(o => new EDBPushDto(
             o.CO2Emission,
             o.PriceArea ?? string.Empty,
-            o.Minutes5DK = DateTime.UtcNow))
+            o.Minutes5DK))
             .ToList();
         
         await _hub.Clients.All.SendAsync("NyeMaalinger", dtoer, stoppeToken);
-        
-        _logger.LogInformation(
-            "Sendte {Antal} målinger til alle tilsluttede browsere", dtoer.Count());
     }
 }

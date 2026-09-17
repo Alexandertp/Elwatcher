@@ -1,4 +1,5 @@
-﻿using ElWatcher.Interfaces;
+﻿using System.Diagnostics;
+using ElWatcher.Interfaces;
 using ElWatcher.Models;
 using Microsoft.Data.SqlClient;
 
@@ -74,7 +75,11 @@ public class DBLagringRepo : IDBLagring
             command.Parameters.AddWithValue($"@Tidspunkt{index}", obs.Minutes5DK);
             index++;
         }
-        
+
+        foreach (var parameter in command.Parameters)
+        {
+            Debug.WriteLine(parameter.ToString());
+        }
         command.CommandText = "INSERT INTO Co2Emission (EmissionValue, Omraade, Tidspunkt) VALUES "
             + string.Join(", ", vaerdier);
 
@@ -129,6 +134,7 @@ public class DBLagringRepo : IDBLagring
                 Minutes5DK = reader.GetDateTime(2),
             });
         }
+
         return resultater;
     }
 }
